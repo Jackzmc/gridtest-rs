@@ -63,6 +63,9 @@ impl World {
         // TODO: implement
     }
 
+    pub fn is_occupied(&self, pos: &Position) -> bool {
+        self.get_tile(pos).is_some_and(|t| t.get_type() != &TileType::Air)
+    }
 
     /// Sets the tile at position, returning a reference to it.
     pub fn set_tile(&mut self, pos: &Position, tile: Box<dyn Tile>) -> &Box<dyn Tile> {
@@ -74,6 +77,8 @@ impl World {
     /// Moves a tile from pos 'from' to 'to'. Returns false if out of bounds
     pub fn mv_tile(&mut self, from: &Position, to: &Position) -> bool {
         if to.0 >= GRID_SIZE || to.1 >= GRID_SIZE {
+            return false;
+        } else if self.is_occupied(to) {
             return false;
         }
         // Replace current tile with air,
