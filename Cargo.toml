@@ -9,7 +9,6 @@ edition = "2021"
 strum = "0.25"
 strum_macros = "0.25"
 rand = { version = "0.8.5", features = [] }
-console = { version = "*", features = [] }
 minifb = "*"
 raqote = "*"
 font-kit = "*"

@@ -11,7 +11,6 @@ use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 use crate::game::Game;
 use crate::tiles::player::PlayerTile;
-use crate::world::World;
 
 #[derive(Clone, Debug)]
 pub struct Position(usize, usize);
