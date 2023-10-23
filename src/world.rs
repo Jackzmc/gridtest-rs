@@ -17,7 +17,6 @@ impl World {
             let mut columns: Vec<Box<dyn Tile>> = vec![];
             for x in 0..width {
                 let mut tile = BaseTile::new(TileType::Air);
-                tile.set_pos(Position(x, y));
                 columns.push(tile);
             }
             rows.push(columns);
@@ -54,7 +53,6 @@ impl World {
     /// Swaps in tile into position, returning the replaced tile
     pub fn swap_in_tile(&mut self, pos: &Position, mut tile: Box<dyn Tile>) -> Box<dyn Tile> {
         let row = self.tiles.get_mut(pos.1).unwrap();
-        tile.set_pos(pos.clone());
         std::mem::replace(&mut row[pos.0], tile)
     }
 
@@ -83,7 +81,6 @@ impl World {
         }
         // Replace current tile with air,
         let mut tile = self.swap_in_tile(from, BaseTile::new(TileType::Air));
-        tile.set_pos(to.clone());
         self.set_tile(to, tile);
 
         /*if let Some(from_tile) = self.get_tile_mut(from) {
@@ -171,11 +168,11 @@ impl World {
 
     /// Renders every tile
     pub fn render(&self, target: &mut DrawTarget, font: &Font) {
-        for row in self.tiles.iter() {
-            for tile in row.iter() {
-                // Skip AIR tiles
+        for y in 0..self.tiles.len() {
+            for x in 0..self.tiles[y].len() {
+                let tile = &self.tiles[y][x];
                 if tile.get_type() != &TileType::Air {
-                    tile.render(target, font);
+                    tile.render(target, &Position(x, y), font);
                 }
             }
         }

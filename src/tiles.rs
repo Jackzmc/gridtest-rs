@@ -8,10 +8,8 @@ use strum_macros::Display;
 use crate::Position;
 
 pub trait Tile {
-    fn render(&self, target: &mut DrawTarget, font: &Font);
+    fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font);
     fn update(&self, window: &mut Window);
-    fn set_pos(&mut self, pos: Position);
-    fn get_pos(&self) -> &Position;
     fn get_type(&self) -> &TileType;
 }
 

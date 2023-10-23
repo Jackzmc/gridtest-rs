@@ -5,25 +5,16 @@ use crate::{Position, TILE_SIZE};
 use crate::tiles::{Tile, TileType};
 
 pub struct BaseTile {
-    pos: Position,
     tile_type: TileType
 }
 
 impl Tile for BaseTile {
-    fn render(&self, target: &mut DrawTarget, font: &Font) {
-        target.fill_rect(self.pos.0 as f32 * TILE_SIZE, self.pos.1 as f32 * TILE_SIZE, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0, 0xff, 0)), &DrawOptions::new());
+    fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font) {
+        target.fill_rect(pos.0 as f32 * TILE_SIZE, pos.1 as f32 * TILE_SIZE, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0, 0xff, 0)), &DrawOptions::new());
     }
 
     fn update(&self, window: &mut Window) {
 
-    }
-
-    fn set_pos(&mut self, pos: Position) {
-        self.pos = pos;
-    }
-
-    fn get_pos(&self) -> &Position {
-        &self.pos
     }
 
     fn get_type(&self) -> &TileType {
@@ -34,7 +25,6 @@ impl Tile for BaseTile {
 impl BaseTile {
     pub fn new(tile_type: TileType) -> Box<impl Tile> {
         Box::new(BaseTile {
-            pos: Position(0, 0),
             tile_type
         })
     }
