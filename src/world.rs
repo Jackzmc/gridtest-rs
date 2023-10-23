@@ -105,7 +105,6 @@ impl World {
     /// Generates the grid
     fn generate(&mut self) {
         for y in 0..GRID_SIZE - 1 {
-            let row = self.tiles.get_mut(y).unwrap();
             for x in 0..GRID_SIZE {
                 let tile_type = util::get_random_tile_type();
                 if tile_type != TileType::Air {

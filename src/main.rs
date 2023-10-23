@@ -2,8 +2,6 @@ mod world;
 mod tiles;
 mod util;
 
-use std::string::ToString;
-use rand::{Rng};
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
 use raqote::{DrawTarget, SolidSource, Source, DrawOptions, PathBuilder, Point, Transform, StrokeStyle};
 use font_kit::family_name::FamilyName;
@@ -60,11 +58,6 @@ fn main() {
         );
         world.render(&mut window, &mut dt);
 
-        let mut pb = PathBuilder::new();
-        let path = pb.finish();
-        dt.fill(&path, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0, 0xff, 0)), &DrawOptions::new());
-        //
-        let mut pb = PathBuilder::new();
         if let Some(pos) = window.get_mouse_pos(MouseMode::Clamp) {
             let pos_string = format!("Player={:?}", &player_pos);
             dt.draw_text(&font, 36., &pos_string, Point::new(0., 100.),
