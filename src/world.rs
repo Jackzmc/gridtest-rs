@@ -2,16 +2,18 @@ use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
 use crate::{GRID_SIZE, Position, util};
-use crate::tiles::base::BaseTile;
-use crate::tiles::{Tile, TileType};
+use crate::entity::Entity;
+use crate::tile::base::BaseTile;
+use crate::tile::{Tile, TileType};
 
 pub struct World {
-    tiles: Vec<Vec<Box<dyn Tile>>>
+    tiles: Vec<Vec<Box<dyn Tile>>>,
+    entities: Vec<Box<dyn Entity>>
 }
 
 impl World {
     pub fn new(width: usize, height: usize) -> World {
-        // Initalize the tiles
+        // Initalize the tile
         let mut rows = vec![];
         for y in 0..height {
             let mut columns: Vec<Box<dyn Tile>> = vec![];
@@ -22,7 +24,8 @@ impl World {
             rows.push(columns);
         }
         let mut world = World {
-            tiles: rows
+            tiles: rows,
+            entities: vec![],
         };
         world.generate();
         world

@@ -1,6 +1,6 @@
 use rand::Rng;
 use crate::Position;
-use crate::tiles::TileType;
+use crate::tile::TileType;
 
 pub fn get_random_tile_type() -> TileType {
     let mut rng = rand::thread_rng();

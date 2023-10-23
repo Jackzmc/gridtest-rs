@@ -2,7 +2,7 @@ use font_kit::font::Font;
 use minifb::Window;
 use raqote::{DrawOptions, DrawTarget, SolidSource, Source};
 use crate::{Position, TILE_SIZE};
-use crate::tiles::{Tile, TileType};
+use crate::tile::{Tile, TileType};
 
 pub struct BaseTile {
     tile_type: TileType

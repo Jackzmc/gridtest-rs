@@ -5,7 +5,7 @@ use font_kit::source::SystemSource;
 use minifb::Window;
 use raqote::{DrawOptions, DrawTarget, Point, SolidSource, Source};
 use crate::{Position, TILE_SIZE};
-use crate::tiles::{Tile, TileType};
+use crate::tile::{Tile, TileType};
 
 pub struct PlayerTile {
 }

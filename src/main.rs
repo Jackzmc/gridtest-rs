@@ -1,7 +1,8 @@
 mod world;
-mod tiles;
+mod tile;
 mod util;
 mod game;
+mod entity;
 
 use std::ops::Deref;
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
@@ -10,14 +11,17 @@ use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 use crate::game::Game;
-use crate::tiles::player::PlayerTile;
+use crate::tile::player::PlayerTile;
 
 #[derive(Clone, Debug)]
 pub struct Position(usize, usize);
 
+#[derive(Clone, Debug)]
+pub struct Velocity(f32, f32);
 
 
-/// The size of the tiles (TILE_SIZExTILE_SIZE)
+
+/// The size of the tile (TILE_SIZExTILE_SIZE)
 const TILE_SIZE: f32 = 20f32;
 const GRID_SIZE: usize = 20;
 const WIN_WIDTH: usize = 400;
