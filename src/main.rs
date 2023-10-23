@@ -49,11 +49,6 @@ fn game_loop(game: &mut Game, player_pos: &mut Position) {
     loop {
         game.update();
         game.render();
-
-        if let Some(pos) = game.window.get_mouse_pos(MouseMode::Clamp) {
-            let pos_string = format!("Player={:?}", &player_pos);
-            game.draw_text_simple(Point::new(pos.0, pos.1), 30., &pos_string, Color::new(255, 0, 0, 0));
-        }
     }
 }
 

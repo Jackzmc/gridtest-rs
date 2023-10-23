@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell, RefMut};
 use std::rc::Rc;
 use font_kit::font::Font;
-use minifb::{Key, Window};
+use minifb::{Key, MouseMode, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
 use crate::{GRID_SIZE, Position};
 use crate::world::World;
@@ -9,7 +9,7 @@ use crate::world::World;
 pub struct Game {
     pub window: Window,
     pub target: DrawTarget,
-    font: Font,
+    pub font: Font,
     size: (usize, usize),
     current_world: Rc<RefCell<World>>,
     player_pos: Position
@@ -52,7 +52,13 @@ impl Game {
 
     pub fn render(&mut self) {
         self.target.clear(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff));
+
         self.current_world.borrow().render(&mut self.target, &self.font);
+        if let Some(pos) = self.window.get_mouse_pos(MouseMode::Clamp) {
+            let pos_string = format!("Player({},{})", self.player_pos.0, self.player_pos.1);
+            self.draw_text_simple(Point::new(pos.0, pos.1), 15., &pos_string, Color::new(255, 0, 0, 0));
+        }
+
         self.window.update_with_buffer(self.target.get_data(), self.size.0, self.size.1).unwrap();
     }
 
