@@ -1,3 +1,4 @@
+use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
 use crate::{GRID_SIZE, Position, util};
@@ -31,7 +32,7 @@ impl World {
     /// Removes the tile at position (replacing with air), returning the tile
     pub fn remove_tile(&mut self, pos: &Position) -> Box<dyn Tile> {
         let replacement_tile = BaseTile::new(TileType::Air);
-        self.swap_tile(pos, replacement_tile)
+        self.swap_in_tile(pos, replacement_tile)
     }
 
     pub fn get_tile(&self, pos: &Position) -> Option<&Box<dyn Tile>> {
@@ -51,14 +52,21 @@ impl World {
     }
 
     /// Swaps in tile into position, returning the replaced tile
-    pub fn swap_tile(&mut self, pos: &Position, tile: Box<dyn Tile>) -> Box<dyn Tile> {
+    pub fn swap_in_tile(&mut self, pos: &Position, mut tile: Box<dyn Tile>) -> Box<dyn Tile> {
         let row = self.tiles.get_mut(pos.1).unwrap();
+        tile.set_pos(pos.clone());
         std::mem::replace(&mut row[pos.0], tile)
     }
 
+    pub fn swap_tile(&mut self, a: &Position, b: &Position) {
+        let row = self.tiles.get_mut(a.1).unwrap();
+        // TODO: implement
+    }
+
+
     /// Sets the tile at position, returning a reference to it.
     pub fn set_tile(&mut self, pos: &Position, tile: Box<dyn Tile>) -> &Box<dyn Tile> {
-        self.swap_tile(pos, tile);
+        self.swap_in_tile(pos, tile);
         let row = self.tiles.get(pos.1).unwrap();
         row.get(pos.0).unwrap()
     }
@@ -69,7 +77,7 @@ impl World {
             return false;
         }
         // Replace current tile with air,
-        let mut tile = self.swap_tile(from, BaseTile::new(TileType::Air));
+        let mut tile = self.swap_in_tile(from, BaseTile::new(TileType::Air));
         tile.set_pos(to.clone());
         self.set_tile(to, tile);
 
@@ -108,19 +116,20 @@ impl World {
             for x in 0..GRID_SIZE {
                 let tile_type = util::get_random_tile_type();
                 if tile_type != TileType::Air {
-                    let mut tile = BaseTile::new(tile_type);
+                    let tile = BaseTile::new(tile_type);
                     let pos = Position(x, y);
-                    tile.set_pos(pos.clone());
                     self.set_tile(&pos, tile);
                 }
             }
         }
+
         // // Force bottom layer to have solid
-        // let row = self.tiles.get_mut(TILE_DIM - 1).unwrap();
-        // for c in 0..TILE_DIM {
-        //     let tile = row.get_mut(c).unwrap();
-        //     tile.set_type(TileType::Stone);
-        // }
+        let row = self.tiles.get_mut(GRID_SIZE - 1).unwrap();
+        for c in 0..GRID_SIZE {
+            let tile = BaseTile::new(TileType::Stone);
+            let pos = Position(c, GRID_SIZE - 1);
+            self.set_tile(&pos, tile);
+        }
     }
 
     fn print(&self) {
@@ -156,12 +165,12 @@ impl World {
     }
 
     /// Renders every tile
-    pub fn render(&self, window: &mut Window, target: &mut DrawTarget) {
+    pub fn render(&self, target: &mut DrawTarget, font: &Font) {
         for row in self.tiles.iter() {
             for tile in row.iter() {
                 // Skip AIR tiles
                 if tile.get_type() != &TileType::Air {
-                    tile.render(window, target);
+                    tile.render(target, font);
                 }
             }
         }
