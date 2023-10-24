@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::ptr;
 use std::rc::{Rc, Weak};
 use font_kit::font::Font;
 use minifb::Window;
@@ -77,8 +78,12 @@ impl World {
     }
 
     pub fn swap_tile(&mut self, a: &Position, b: &Position) {
-        let row = self.tiles.get_mut(a.1).unwrap();
-        // TODO: implement
+        // This is unsafe code because we are taking two mut references so we can swap them around.
+        unsafe {
+            let tile_a: *mut Box<dyn Tile> = &mut self.tiles[a.1][a.0];
+            let tile_b: *mut Box<dyn Tile> = &mut self.tiles[b.1][b.0];
+            ptr::swap(tile_a, tile_b);
+        }
     }
 
     pub fn is_occupied(&self, pos: &Position) -> bool {
@@ -100,8 +105,9 @@ impl World {
             return false;
         }
         // Replace current tile with air,
-        let tile = self.swap_in_tile(from, EmptyTile::new());
-        self.set_tile(to, tile);
+        self.swap_tile(from, to);
+        // let tile = self.swap_in_tile(from, EmptyTile::new());
+        // self.set_tile(to, tile);
 
         /*if let Some(from_tile) = self.get_tile_mut(from) {
             // let tile_type = from_tile.get_type().clone();
