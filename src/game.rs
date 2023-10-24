@@ -3,7 +3,10 @@ use std::rc::Rc;
 use font_kit::font::Font;
 use minifb::{Key, MouseMode, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
-use crate::{GRID_SIZE, Position};
+use crate::{EntityPosition, GRID_SIZE, Position};
+use crate::entity::Entity;
+use crate::entity::player::PlayerEntity;
+use crate::tile::player::PlayerTile;
 use crate::world::World;
 
 pub struct Game {
@@ -19,14 +22,15 @@ impl Game {
     pub fn new(window: Window, target: DrawTarget, font: Font) -> Game {
         let world = World::new(GRID_SIZE, GRID_SIZE);
         let default_world = Rc::new(RefCell::new(world));
+        // let player = default_world.borrow_mut().add_entity(PlayerEntity::new());
         let size = window.get_size();
         Game {
             window,
             target,
             font,
             size,
-            player_pos: Position(0, 0),
-            current_world: default_world.clone(),
+            player_pos: Position(0,0),
+            current_world: default_world
         }
     }
 
@@ -54,11 +58,6 @@ impl Game {
         self.target.clear(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff));
 
         self.current_world.borrow().render(&mut self.target, &self.font);
-        if let Some(pos) = self.window.get_mouse_pos(MouseMode::Clamp) {
-            let pos_string = format!("Player({},{})", self.player_pos.0, self.player_pos.1);
-            self.draw_text_simple(Point::new(pos.0, pos.1), 15., &pos_string, Color::new(255, 0, 0, 0));
-        }
-
         self.window.update_with_buffer(self.target.get_data(), self.size.0, self.size.1).unwrap();
     }
 

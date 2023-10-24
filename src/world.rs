@@ -1,19 +1,22 @@
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
 use crate::{GRID_SIZE, Position, util};
 use crate::entity::Entity;
+use crate::game::Game;
 use crate::tile::base::BaseTile;
 use crate::tile::{Tile, TileType};
 
 pub struct World {
     tiles: Vec<Vec<Box<dyn Tile>>>,
-    entities: Vec<Box<dyn Entity>>
+    entities: Vec<Rc<RefCell<Box<dyn Entity>>>>
 }
 
 impl World {
     pub fn new(width: usize, height: usize) -> World {
-        // Initalize the tile
+        // Initialize the tile
         let mut rows = vec![];
         for y in 0..height {
             let mut columns: Vec<Box<dyn Tile>> = vec![];
@@ -29,6 +32,18 @@ impl World {
         };
         world.generate();
         world
+    }
+
+    pub fn add_entity(&mut self, entity: Box<dyn Entity>) -> Rc<RefCell<Box<dyn Entity>>> {
+        let c = Rc::new(RefCell::new(entity));
+        self.entities.push(c.clone());
+        c
+    }
+
+    pub fn remove_entity(&mut self, entity: &Box<dyn Entity>) {
+        // if let Some(i) = self.entities.iter().position(|e| e == entity) {
+        //     self.entities.remove(i);
+        // }
     }
 
     /// Removes the tile at position (replacing with air), returning the tile

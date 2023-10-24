@@ -11,7 +11,7 @@ pub struct PlayerTile {
 }
 
 impl PlayerTile {
-    pub fn new(pos: Position) -> Box<impl Tile> {
+    pub fn new() -> Box<impl Tile> {
         Box::new(PlayerTile {
         })
     }
@@ -25,6 +25,7 @@ impl Tile for PlayerTile {
                      &DrawOptions::new(),
         );
         target.fill_rect(x, y, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)), &DrawOptions::new());
+
     }
 
     fn update(&self, window: &mut Window) {

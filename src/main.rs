@@ -4,17 +4,23 @@ mod util;
 mod game;
 mod entity;
 
+use std::cell::RefCell;
 use std::ops::Deref;
+use std::rc::{Rc, Weak};
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
 use raqote::{DrawTarget, SolidSource, Source, DrawOptions, PathBuilder, Point, Transform, StrokeStyle, Color};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
+use crate::entity::player::PlayerEntity;
 use crate::game::Game;
 use crate::tile::player::PlayerTile;
+use crate::world::World;
 
 #[derive(Clone, Debug)]
 pub struct Position(usize, usize);
+#[derive(Clone, Debug)]
+pub struct EntityPosition(isize, isize);
 
 #[derive(Clone, Debug)]
 pub struct Velocity(f32, f32);
@@ -41,14 +47,12 @@ fn main() {
         .unwrap();
 
     let mut game = Game::new(window, dt, font);
-
-    let mut player_pos = Position(0, 0);
-    game.world_mut().set_tile(&player_pos, PlayerTile::new(Position(0, 0)));
-
-    game_loop(&mut game, &mut player_pos);
+    let player_pos = Position(0, 0);
+    game.world_mut().set_tile(&player_pos, PlayerTile::new());
+    game_loop(&mut game);
 }
 
-fn game_loop(game: &mut Game, player_pos: &mut Position) {
+fn game_loop(game: &mut Game) {
     loop {
         game.update();
         game.render();
