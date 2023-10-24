@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use font_kit::font::Font;
 use minifb::Window;
+use rand::Rng;
 use raqote::DrawTarget;
 use crate::{GRID_SIZE, Position, util};
 use crate::entity::Entity;
@@ -133,22 +134,57 @@ impl World {
 
     /// Generates the grid
     fn generate(&mut self) {
-        for y in 0..GRID_SIZE - 1 {
-            for x in 0..GRID_SIZE {
-                let tile_type = util::get_random_tile_type();
-                if tile_type != TileType::Empty {
-                    let tile = BaseTile::new(util::get_random_tile_texture());
-                    let pos = Position(x, y);
-                    self.set_tile(&pos, tile);
-                }
-            }
+        // for y in 1..GRID_SIZE - 1 {
+        //     for x in 1..GRID_SIZE {
+        //         let tile_type = util::get_random_tile_type();
+        //         if tile_type != TileType::Empty {
+        //             let tile = BaseTile::new(util::get_random_tile_texture());
+        //             let pos = Position(x, y);
+        //             self.set_tile(&pos, tile);
+        //         }
+        //     }
+        // }
+
+        // Make the floor
+        for x in 0..GRID_SIZE {
+            let tile = BaseTile::new(TileTexture::Bedrock);
+            let pos = Position(x, GRID_SIZE - 1);
+            self.set_tile(&pos, tile);
         }
 
-        // // Force bottom layer to have solid
-        for c in 0..GRID_SIZE {
-            let tile = BaseTile::new(TileTexture::Bedrock);
-            let pos = Position(c, GRID_SIZE - 1);
-            self.set_tile(&pos, tile);
+        self._generate_ground(TileTexture::Stone, 0.9, vec![TileTexture::Bedrock, TileTexture::Stone]);
+        self._generate_ground(TileTexture::Grass, 0.4, vec![TileTexture::Stone, TileTexture::Grass]);
+    }
+
+    fn _generate_ground(&mut self, texture: TileTexture, chance: f32, valid_textures: Vec<TileTexture>) {
+        let mut rng = rand::thread_rng();
+        for y in (0..GRID_SIZE-1).rev() {
+            for x in 0..GRID_SIZE {
+                // If the tile is empty and the tile below is a solid:
+                let pos = Position(x, y);
+                let tile_type = self.tiles[y+1][x].get_type();
+                if tile_type == &TileType::Base {
+                    let tile = self.tiles[y+1][x].as_any()
+                        .downcast_ref::<BaseTile>()
+                        .unwrap();
+                    println!("type at {} = {:?} (variant={:?})", pos, tile_type, tile.get_texture());
+                } else {
+                    println!("type at {} = {:?}", pos, self.tiles[y][x].get_type());
+                }
+                // Check the tile below us
+                if self.tiles[y+1][x].get_type() == &TileType::Base {
+                    let tile = self.tiles[y+1][x].as_any()
+                        .downcast_ref::<BaseTile>()
+                        .unwrap();
+                    println!("texture = {:?}. our pos = {}", tile.get_texture(), pos);
+                    if valid_textures.contains(tile.get_texture()) {
+                        if rng.gen_range(0.0..1.0) <= chance {
+                            let tile = BaseTile::new(texture.clone());
+                            self.set_tile(&pos, tile);
+                        }
+                    }
+                }
+            }
         }
     }
 

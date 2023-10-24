@@ -1,3 +1,4 @@
+use std::any::Any;
 use font_kit::family_name::FamilyName;
 use font_kit::font::Font;
 use font_kit::properties::Properties;
@@ -34,5 +35,9 @@ impl Tile for PlayerTile {
 
     fn get_type(&self) -> &TileType {
         &TileType::Player
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

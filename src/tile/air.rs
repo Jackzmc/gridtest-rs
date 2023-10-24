@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::io::Empty;
 use font_kit::font::Font;
 use minifb::Window;
@@ -23,5 +24,9 @@ impl Tile for EmptyTile {
 
     fn get_type(&self) -> &TileType {
         &TileType::Empty
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

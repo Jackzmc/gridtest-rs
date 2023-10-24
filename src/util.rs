@@ -13,7 +13,7 @@ pub fn get_random_tile_texture() -> TileTexture {
 
 pub fn get_random_tile_type() -> TileType {
     let mut rng = rand::thread_rng();
-    match rng.gen_range(0..=1) {
+    match rng.gen_range(0..=2) {
         0 => TileType::Base,
         _ => TileType::Empty,
     }

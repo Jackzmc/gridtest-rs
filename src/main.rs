@@ -5,6 +5,7 @@ mod game;
 mod entity;
 
 use std::cell::RefCell;
+use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
@@ -19,6 +20,11 @@ use crate::world::World;
 
 #[derive(Clone, Debug)]
 pub struct Position(usize, usize);
+impl Display for Position {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({},{})", self.0, self.1)
+    }
+}
 #[derive(Clone, Debug)]
 pub struct EntityPosition(isize, isize);
 
@@ -47,7 +53,7 @@ fn main() {
         .unwrap();
 
     let mut game = Game::new(window, dt, font);
-    let player_pos = Position(0, 0);
+    let player_pos = Position(1, 1);
     game.world_mut().set_tile(&player_pos, PlayerTile::new());
     game_loop(&mut game);
 }

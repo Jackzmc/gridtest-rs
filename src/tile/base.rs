@@ -1,3 +1,4 @@
+use std::any::Any;
 use font_kit::font::Font;
 use minifb::Window;
 use raqote::{Color, DrawOptions, DrawTarget, SolidSource, Source};
@@ -38,6 +39,10 @@ impl Tile for BaseTile {
     fn get_type(&self) -> &TileType {
         &TileType::Base
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl BaseTile {
@@ -47,5 +52,8 @@ impl BaseTile {
         })
     }
 
+    pub fn get_texture(&self) -> &TileTexture {
+        &self.texture
+    }
 }
 
