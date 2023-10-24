@@ -1,5 +1,6 @@
 pub mod base;
 pub mod player;
+pub mod air;
 
 use font_kit::font::Font;
 use minifb::Window;
@@ -13,12 +14,9 @@ pub trait Tile {
     fn get_type(&self) -> &TileType;
 }
 
-#[derive(Display, Clone, Debug, PartialOrd, PartialEq)]
+#[derive(PartialEq)]
 pub enum TileType {
-    #[strum(serialize = " ")]
-    Air,
-    #[strum(serialize = "S")]
-    Stone,
-    #[strum(serialize = "•")]
-    Player,
+    Empty,
+    Base,
+    Player
 }

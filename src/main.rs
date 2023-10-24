@@ -35,7 +35,7 @@ const WIN_HEIGHT: usize = 400;
 
 
 fn main() {
-    let mut window = Window::new("Grid Test", WIN_WIDTH, WIN_HEIGHT, WindowOptions {
+    let window = Window::new("Grid Test", WIN_WIDTH, WIN_HEIGHT, WindowOptions {
         ..WindowOptions::default()
     }).unwrap();
     let size = window.get_size();

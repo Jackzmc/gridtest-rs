@@ -6,8 +6,9 @@ use raqote::DrawTarget;
 use crate::{GRID_SIZE, Position, util};
 use crate::entity::Entity;
 use crate::game::Game;
-use crate::tile::base::BaseTile;
+use crate::tile::base::{BaseTile, TileTexture};
 use crate::tile::{Tile, TileType};
+use crate::tile::air::EmptyTile;
 
 pub struct World {
     tiles: Vec<Vec<Box<dyn Tile>>>,
@@ -21,7 +22,7 @@ impl World {
         for y in 0..height {
             let mut columns: Vec<Box<dyn Tile>> = vec![];
             for x in 0..width {
-                let mut tile = BaseTile::new(TileType::Air);
+                let mut tile = EmptyTile::new();
                 columns.push(tile);
             }
             rows.push(columns);
@@ -48,7 +49,7 @@ impl World {
 
     /// Removes the tile at position (replacing with air), returning the tile
     pub fn remove_tile(&mut self, pos: &Position) -> Box<dyn Tile> {
-        let replacement_tile = BaseTile::new(TileType::Air);
+        let replacement_tile = EmptyTile::new();
         self.swap_in_tile(pos, replacement_tile)
     }
 
@@ -80,7 +81,7 @@ impl World {
     }
 
     pub fn is_occupied(&self, pos: &Position) -> bool {
-        self.get_tile(pos).is_some_and(|t| t.get_type() != &TileType::Air)
+        self.get_tile(pos).is_some_and(|t| t.get_type() != &TileType::Empty)
     }
 
     /// Sets the tile at position, returning a reference to it.
@@ -98,7 +99,7 @@ impl World {
             return false;
         }
         // Replace current tile with air,
-        let mut tile = self.swap_in_tile(from, BaseTile::new(TileType::Air));
+        let tile = self.swap_in_tile(from, EmptyTile::new());
         self.set_tile(to, tile);
 
         /*if let Some(from_tile) = self.get_tile_mut(from) {
@@ -135,8 +136,8 @@ impl World {
         for y in 0..GRID_SIZE - 1 {
             for x in 0..GRID_SIZE {
                 let tile_type = util::get_random_tile_type();
-                if tile_type != TileType::Air {
-                    let tile = BaseTile::new(tile_type);
+                if tile_type != TileType::Empty {
+                    let tile = BaseTile::new(util::get_random_tile_texture());
                     let pos = Position(x, y);
                     self.set_tile(&pos, tile);
                 }
@@ -144,22 +145,10 @@ impl World {
         }
 
         // // Force bottom layer to have solid
-        let row = self.tiles.get_mut(GRID_SIZE - 1).unwrap();
         for c in 0..GRID_SIZE {
-            let tile = BaseTile::new(TileType::Stone);
+            let tile = BaseTile::new(TileTexture::Bedrock);
             let pos = Position(c, GRID_SIZE - 1);
             self.set_tile(&pos, tile);
-        }
-    }
-
-    fn print(&self) {
-        self._print_line(1);
-        for row in self.tiles.iter() {
-            for tile in row.iter() {
-                print!("|{}", tile.get_type());
-            }
-            println!("|");
-            self._print_line(1);
         }
     }
 
@@ -189,9 +178,7 @@ impl World {
         for y in 0..self.tiles.len() {
             for x in 0..self.tiles[y].len() {
                 let tile = &self.tiles[y][x];
-                if tile.get_type() != &TileType::Air {
-                    tile.render(target, &Position(x, y), font);
-                }
+                tile.render(target, &Position(x, y), font);
             }
         }
     }

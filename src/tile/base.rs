@@ -1,35 +1,51 @@
 use font_kit::font::Font;
 use minifb::Window;
-use raqote::{DrawOptions, DrawTarget, SolidSource, Source};
+use raqote::{Color, DrawOptions, DrawTarget, SolidSource, Source};
 use crate::{Position, TILE_SIZE};
 use crate::tile::{Tile, TileType};
 
+
+#[derive(Clone, Debug, PartialOrd, PartialEq)]
+pub enum TileTexture {
+    Stone,
+    Bedrock,
+    Grass
+}
+
+impl TileTexture {
+    pub fn get_color(&self) -> Color {
+        match self {
+            TileTexture::Stone => Color::new(255, 89, 89, 87),
+            TileTexture::Bedrock => Color::new(255, 46, 46, 45),
+            TileTexture::Grass => Color::new(255, 12, 207, 67),
+            _ => Color::new(255, 255, 255, 255)
+        }
+    }
+}
+
 pub struct BaseTile {
-    tile_type: TileType
+    texture: TileTexture
 }
 
 impl Tile for BaseTile {
     fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font) {
-        target.fill_rect(pos.0 as f32 * TILE_SIZE, pos.1 as f32 * TILE_SIZE, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0, 0xff, 0)), &DrawOptions::new());
+        target.fill_rect(pos.0 as f32 * TILE_SIZE, pos.1 as f32 * TILE_SIZE, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from(self.texture.get_color())), &DrawOptions::new());
     }
 
     fn update(&self, window: &mut Window) {
 
     }
-
     fn get_type(&self) -> &TileType {
-        &self.tile_type
+        &TileType::Base
     }
 }
 
 impl BaseTile {
-    pub fn new(tile_type: TileType) -> Box<impl Tile> {
+    pub fn new(texture: TileTexture) -> Box<impl Tile> {
         Box::new(BaseTile {
-            tile_type
+            texture
         })
     }
-    pub fn set_type(&mut self, tile_type: TileType) {
-        self.tile_type = tile_type;
-    }
+
 }
 

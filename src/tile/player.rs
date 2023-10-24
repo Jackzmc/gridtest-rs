@@ -32,7 +32,6 @@ impl Tile for PlayerTile {
 
     }
 
-
     fn get_type(&self) -> &TileType {
         &TileType::Player
     }
