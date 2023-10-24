@@ -10,6 +10,7 @@ use crate::tile::{Tile, TileType};
 pub enum TileTexture {
     Stone,
     Bedrock,
+    Dirt,
     Grass
 }
 
@@ -18,6 +19,7 @@ impl TileTexture {
         match self {
             TileTexture::Stone => Color::new(255, 89, 89, 87),
             TileTexture::Bedrock => Color::new(255, 46, 46, 45),
+            TileTexture::Dirt => Color::new(255, 138, 90, 32),
             TileTexture::Grass => Color::new(255, 12, 207, 67),
             _ => Color::new(255, 255, 255, 255)
         }

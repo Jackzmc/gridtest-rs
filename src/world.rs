@@ -151,9 +151,10 @@ impl World {
             let pos = Position(x, GRID_SIZE - 1);
             self.set_tile(&pos, tile);
         }
-
+        // TODO: instead do column based, with a randomized # of height per texture, per column
         self._generate_ground(TileTexture::Stone, 0.9, vec![TileTexture::Bedrock, TileTexture::Stone]);
-        self._generate_ground(TileTexture::Grass, 0.4, vec![TileTexture::Stone, TileTexture::Grass]);
+        self._generate_ground(TileTexture::Dirt, 0.5, vec![TileTexture::Bedrock, TileTexture::Stone]);
+        self._generate_ground(TileTexture::Grass, 0.8, vec![TileTexture::Stone, TileTexture::Grass, TileTexture::Dirt]);
     }
 
     fn _generate_ground(&mut self, texture: TileTexture, chance: f32, valid_textures: Vec<TileTexture>) {
@@ -162,6 +163,9 @@ impl World {
             for x in 0..GRID_SIZE {
                 // If the tile is empty and the tile below is a solid:
                 let pos = Position(x, y);
+                if self.is_occupied(&pos) {
+                    continue;
+                }
                 let tile_type = self.tiles[y+1][x].get_type();
                 if tile_type == &TileType::Base {
                     let tile = self.tiles[y+1][x].as_any()
@@ -171,6 +175,7 @@ impl World {
                 } else {
                     println!("type at {} = {:?}", pos, self.tiles[y][x].get_type());
                 }
+
                 // Check the tile below us
                 if self.tiles[y+1][x].get_type() == &TileType::Base {
                     let tile = self.tiles[y+1][x].as_any()

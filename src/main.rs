@@ -36,12 +36,11 @@ pub struct Velocity(f32, f32);
 /// The size of the tile (TILE_SIZExTILE_SIZE)
 const TILE_SIZE: f32 = 20f32;
 const GRID_SIZE: usize = 20;
-const WIN_WIDTH: usize = 400;
-const WIN_HEIGHT: usize = 400;
 
 
 fn main() {
-    let window = Window::new("Grid Test", WIN_WIDTH, WIN_HEIGHT, WindowOptions {
+    let dim = TILE_SIZE as usize * GRID_SIZE;
+    let window = Window::new("Grid Test", dim, dim, WindowOptions {
         ..WindowOptions::default()
     }).unwrap();
     let size = window.get_size();
