@@ -51,7 +51,7 @@ fn main() {
 
     let mut game = Game::new(window, dt, font);
     // This is weird yes:
-    let player_pos = Position(1, 5);
+    let player_pos = Position(1, 10);
     game.world_mut().set_tile(&player_pos, PlayerTile::new());
     game_loop(&mut game);
 }

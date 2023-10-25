@@ -27,7 +27,7 @@ impl Game {
             target,
             font,
             size,
-            player_pos: Position(1, 5),
+            player_pos: Position(1, 10),
             current_world: default_world
         }
     }
