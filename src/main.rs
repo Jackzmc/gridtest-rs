@@ -6,11 +6,13 @@ mod entity;
 
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
+use std::time::{Duration, Instant};
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
 use raqote::{DrawTarget, SolidSource, Source, DrawOptions, PathBuilder, Point, Transform, StrokeStyle, Color};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
+use minifb::Key::Up;
 use crate::game::Game;
 use crate::tile::player::PlayerTile;
 
@@ -56,8 +58,9 @@ fn main() {
     game_loop(&mut game);
 }
 
+
 fn game_loop(game: &mut Game) {
-    loop {
+    'main_loop: loop {
         game.update();
         game.render();
     }

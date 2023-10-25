@@ -1,5 +1,6 @@
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 use font_kit::font::Font;
 use minifb::{Key, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
@@ -7,10 +8,13 @@ use crate::{EntityPosition, GRID_SIZE, Position};
 use crate::entity::Entity;
 use crate::world::World;
 
+/// 1/N where N is the amount of updates / second
+const UPDATE_RATE: f32 = 1.0 / 30.0;
 pub struct Game {
     pub window: Window,
     pub target: DrawTarget,
     pub font: Font,
+    last_update: Instant,
     size: (usize, usize),
     current_world: Rc<RefCell<World>>,
     player_pos: Position
@@ -22,10 +26,12 @@ impl Game {
         let default_world = Rc::new(RefCell::new(world));
         // let player = default_world.borrow_mut().add_entity(PlayerEntity::new());
         let size = window.get_size();
+        println!("update rate: {}", UPDATE_RATE);
         Game {
             window,
             target,
             font,
+            last_update: Instant::now(),
             size,
             player_pos: Position(1, 10),
             current_world: default_world
@@ -54,12 +60,16 @@ impl Game {
 
     pub fn render(&mut self) {
         self.target.clear(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff));
-
         self.current_world.borrow().render(&mut self.target, &self.font);
         self.window.update_with_buffer(self.target.get_data(), self.size.0, self.size.1).unwrap();
     }
 
     pub fn update(&mut self) {
+        // Only run 1/UPDATE_RATE times a second
+        if self.last_update.elapsed().as_secs_f32() < UPDATE_RATE {
+            return;
+        }
+        self.last_update = Instant::now();
         self.window.get_keys_pressed(minifb::KeyRepeat::Yes).iter().for_each(|key|
             match key {
                 Key::W => {
