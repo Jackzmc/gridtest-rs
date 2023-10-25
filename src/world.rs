@@ -121,9 +121,7 @@ impl World {
             return false;
         }
         let new_pos = Position(new_coords.0 as usize, new_coords.1 as usize);
-        println!("mv_tile_rel = {}", new_pos);
         if self.mv_tile(pos, &new_pos) {
-            println!("success");
             pos.0 = new_pos.0;
             pos.1 = new_pos.1;
             return true
@@ -182,7 +180,7 @@ impl World {
                 let tile = BaseTile::new(texture.clone());
                 self.set_tile(&pos, tile);
             }
-            println!("layer {:?} | X={} | {} <= y <= {}", texture, x, height_bounds.0, height_bounds.1);
+
         }
     }
     /// Renders every tile
