@@ -1,11 +1,11 @@
 use std::any::Any;
-use std::io::Empty;
 use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
 use crate::Position;
 use crate::tile::{Tile, TileType};
 
+#[derive(Copy,Clone)]
 pub struct EmptyTile;
 
 impl EmptyTile {

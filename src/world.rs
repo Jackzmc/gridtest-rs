@@ -1,13 +1,13 @@
 use std::cell::RefCell;
+use std::cmp::max;
 use std::ptr;
-use std::rc::{Rc, Weak};
+use std::rc::{Rc};
 use font_kit::font::Font;
-use minifb::Window;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 use raqote::DrawTarget;
-use crate::{GRID_SIZE, Position, util};
+use crate::{GRID_SIZE, Position};
 use crate::entity::Entity;
-use crate::game::Game;
 use crate::tile::base::{BaseTile, TileTexture};
 use crate::tile::{Tile, TileType};
 use crate::tile::air::EmptyTile;
@@ -17,13 +17,15 @@ pub struct World {
     entities: Vec<Rc<RefCell<Box<dyn Entity>>>>
 }
 
+const TILE_LAYERS: [TileTexture; 4] = [TileTexture::Bedrock, TileTexture::Stone, TileTexture::Dirt, TileTexture::Grass];
+
 impl World {
     pub fn new(width: usize, height: usize) -> World {
         // Initialize the tile
         let mut rows = vec![];
-        for y in 0..height {
+        for _ in 0..height {
             let mut columns: Vec<Box<dyn Tile>> = vec![];
-            for x in 0..width {
+            for _ in 0..width {
                 let mut tile = EmptyTile::new();
                 columns.push(tile);
             }
@@ -106,31 +108,20 @@ impl World {
         }
         // Replace current tile with air,
         self.swap_tile(from, to);
-        // let tile = self.swap_in_tile(from, EmptyTile::new());
-        // self.set_tile(to, tile);
-
-        /*if let Some(from_tile) = self.get_tile_mut(from) {
-            // let tile_type = from_tile.get_type().clone();
-            // from_tile.set_type(TileType::Air);
-            if let Some(to_tile) = self.get_tile_mut(to) {
-                // to_tile.set_type(tile_type);
-                // TODO: optimize out clone
-                self.set_tile(to, from_tile.clone());
-                return true;
-            }
-        }*/
         true
     }
 
     /// Move tile at pos by offset, returns bool if successful / in bounds
     pub fn mv_tile_rel(&mut self, pos: &mut Position, offset: (isize, isize)) -> bool {
-        let new_coords = (pos.0 as isize + offset.0, pos.1 as isize - offset.1);
+        let new_coords = (pos.0 as isize + offset.0, pos.1 as isize + offset.1);
         // Check that we don't go below 0
         if new_coords.0 < 0 || new_coords.1 < 0 {
             return false;
         }
         let new_pos = Position(new_coords.0 as usize, new_coords.1 as usize);
+        println!("mv_tile_rel = {}", new_pos);
         if self.mv_tile(pos, &new_pos) {
+            println!("success");
             pos.0 = new_pos.0;
             pos.1 = new_pos.1;
             return true
@@ -152,74 +143,93 @@ impl World {
         // }
 
         // Make the floor
+        let mut rng = rand::thread_rng();
         for x in 0..GRID_SIZE {
             let tile = BaseTile::new(TileTexture::Bedrock);
-            let pos = Position(x, GRID_SIZE - 1);
+            let pos = Position(x, 0);
             self.set_tile(&pos, tile);
         }
-        // TODO: instead do column based, with a randomized # of height per texture, per column
-        self._generate_ground(TileTexture::Stone, 0.9, vec![TileTexture::Bedrock, TileTexture::Stone]);
-        self._generate_ground(TileTexture::Dirt, 0.5, vec![TileTexture::Bedrock, TileTexture::Stone]);
-        self._generate_ground(TileTexture::Grass, 0.8, vec![TileTexture::Stone, TileTexture::Grass, TileTexture::Dirt]);
+        // For each layer, generate N amount of tiles starting from bottom up
+        self._generate_layer(&mut rng, TileTexture::Stone, vec![TileTexture::Bedrock, TileTexture::Stone], 0, 5);
+        self._generate_layer(&mut rng, TileTexture::Dirt, vec![TileTexture::Stone, TileTexture::Dirt], 1, 4);
+        self._generate_layer(&mut rng, TileTexture::Grass, vec![TileTexture::Dirt, TileTexture::Grass], 2, 2);
+        // TODO: for every layer, do a floating height [min, max] that can fluctuate += some amount, so that neighbors arent very spikey.
+        // self._generate_ground(TileTexture::Stone, 0.9, vec![TileTexture::Bedrock, TileTexture::Stone]);
+        // self._generate_ground(TileTexture::Dirt, 0.5, vec![TileTexture::Bedrock, TileTexture::Stone]);
+        // self._generate_ground(TileTexture::Grass, 0.8, vec![TileTexture::Stone, TileTexture::Grass, TileTexture::Dirt]);
     }
 
-    fn _generate_ground(&mut self, texture: TileTexture, chance: f32, valid_textures: Vec<TileTexture>) {
-        let mut rng = rand::thread_rng();
-        for y in (0..GRID_SIZE-1).rev() {
-            for x in 0..GRID_SIZE {
+    fn _generate_col(&mut self, rng: &mut ThreadRng, x: usize) {
+        // [0, GRID_SIZE-1] as bottom row is bedrock and is skipped
+        let height = rng.gen_range(0..GRID_SIZE-1);
+        let mut y = GRID_SIZE - 2;
+        println!("generating column x={}", x);
+        while y > height {
+            let pos = Position(x, y);
+            println!("generating tile ({})", pos);
+            if !self._generate_tile(rng, &pos) {
+                return;
+            }
+            y -= 1;
+        }
+        println!("end column: max height")
+    }
+
+    fn _generate_tile(&mut self, rng: &mut ThreadRng, pos: &Position) -> bool {
+        let bottom_tile = &self.tiles[pos.1+1][pos.0];
+        if bottom_tile.get_type() != &TileType::Base {
+            println!("ending column: tile is {:?}, not Base", bottom_tile.get_type());
+            return false;
+        }
+        let bottom_variant = bottom_tile.as_any().downcast_ref::<BaseTile>().unwrap()
+            .get_texture();
+        if let Some(i) = TILE_LAYERS.iter().position(|l| l == bottom_variant) {
+            let mut new_variant = bottom_variant;
+            // Use current variant if 50% or if at the end of the layer list
+            if rng.gen_bool(0.4) {
+                if let Some(next_variant) = TILE_LAYERS.get(i + 1) {
+                    println!("new_variant switching {:?} -> {:?}", new_variant, next_variant);
+                    new_variant = next_variant;
+                } else {
+                    return false;
+                }
+            }
+            let tile = BaseTile::new(new_variant.clone());
+            self.set_tile(&pos, tile);
+            return true;
+        }
+        println!("ending column: bottom variant ({:?}) is not in TILE_LAYERS", bottom_variant);
+        return false;
+    }
+
+    fn _generate_layer(&mut self, rng: &mut ThreadRng, texture: TileTexture, valid_bottoms: Vec<TileTexture>, bottom_y: usize, max_height: usize){
+        for x in 0..GRID_SIZE {
+            let height = rng.gen_range(0..max_height);
+            println!("layer {:?} | X={} | max_height={} | {} <= y <= {}", texture, x, max_height, bottom_y + height, bottom_y);
+            for y in bottom_y..bottom_y+height {
                 // If the tile is empty and the tile below is a solid:
                 let pos = Position(x, y);
                 if self.is_occupied(&pos) {
                     continue;
                 }
-                let tile_type = self.tiles[y+1][x].get_type();
-                if tile_type == &TileType::Base {
-                    let tile = self.tiles[y+1][x].as_any()
+                let bottom_tile = &self.tiles[y][x];
+                if bottom_tile.get_type() == &TileType::Base {
+                    let bottom_base = bottom_tile.as_any()
                         .downcast_ref::<BaseTile>()
                         .unwrap();
-                    println!("type at {} = {:?} (variant={:?})", pos, tile_type, tile.get_texture());
+                    if !valid_bottoms.contains(bottom_base.get_texture()) {
+                        continue;
+                    }
+                    // println!("type at {} = {:?} (variant={:?})", pos, tile_type, tile.get_texture());
                 } else {
                     println!("type at {} = {:?}", pos, self.tiles[y][x].get_type());
                 }
 
-                // Check the tile below us
-                if self.tiles[y+1][x].get_type() == &TileType::Base {
-                    let tile = self.tiles[y+1][x].as_any()
-                        .downcast_ref::<BaseTile>()
-                        .unwrap();
-                    println!("texture = {:?}. our pos = {}", tile.get_texture(), pos);
-                    if valid_textures.contains(tile.get_texture()) {
-                        if rng.gen_range(0.0..1.0) <= chance {
-                            let tile = BaseTile::new(texture.clone());
-                            self.set_tile(&pos, tile);
-                        }
-                    }
-                }
+                let tile = BaseTile::new(texture.clone());
+                self.set_tile(&pos, tile);
             }
         }
     }
-
-    pub fn print_coords(&self) {
-        // Multiply by 2 for X and Y
-        let coord_size = GRID_SIZE.to_string().len() * 2;
-        // Add 3 for chars: (,)\
-        let cell_size = coord_size + 3;
-
-        self._print_line(cell_size);
-        for y in 0..GRID_SIZE {
-            for x in 0..GRID_SIZE {
-                print!("|({},{})", x, y);
-
-            }
-            println!("|");
-            self._print_line(cell_size);
-        }
-    }
-
-    fn _print_line(&self, cell_width: usize) {
-        println!("{}+", format!("+{}", "-".repeat(cell_width)).repeat(GRID_SIZE));
-    }
-
     /// Renders every tile
     pub fn render(&self, target: &mut DrawTarget, font: &Font) {
         for y in 0..self.tiles.len() {

@@ -1,12 +1,10 @@
-use std::cell::{Cell, RefCell, RefMut};
+use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use font_kit::font::Font;
-use minifb::{Key, MouseMode, Window};
+use minifb::{Key, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
 use crate::{EntityPosition, GRID_SIZE, Position};
 use crate::entity::Entity;
-use crate::entity::player::PlayerEntity;
-use crate::tile::player::PlayerTile;
 use crate::world::World;
 
 pub struct Game {
@@ -29,7 +27,7 @@ impl Game {
             target,
             font,
             size,
-            player_pos: Position(1,1),
+            player_pos: Position(1, 5),
             current_world: default_world
         }
     }

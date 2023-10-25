@@ -6,7 +6,6 @@ use std::any::Any;
 use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
-use strum_macros::Display;
 use crate::Position;
 
 pub trait Tile {
@@ -17,9 +16,10 @@ pub trait Tile {
     fn as_any(&self) -> &dyn Any;
 }
 
+
 #[derive(PartialEq, Debug)]
 pub enum TileType {
     Empty,
-    Base,
+    Base, // TODO: Base(TileTexture)?
     Player
 }
