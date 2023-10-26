@@ -26,7 +26,7 @@ impl Tile for PlayerTile {
 
     }
 
-    fn update(&self, window: &mut Window) {
+    fn update(&mut self) {
 
     }
 

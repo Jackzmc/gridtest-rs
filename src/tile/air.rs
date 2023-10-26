@@ -18,7 +18,7 @@ impl Tile for EmptyTile {
         // Do nothing
     }
 
-    fn update(&self, window: &mut Window) {
+    fn update(&mut self) {
         // Do nothing
     }
 

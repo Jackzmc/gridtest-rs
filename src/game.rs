@@ -6,6 +6,7 @@ use minifb::{Key, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
 use crate::{EntityPosition, GRID_SIZE, Position};
 use crate::entity::Entity;
+use crate::entity::player::PlayerEntity;
 use crate::world::World;
 
 /// 1/N where N is the amount of updates / second
@@ -17,14 +18,17 @@ pub struct Game {
     last_update: Instant,
     size: (usize, usize),
     current_world: Rc<RefCell<World>>,
-    player_pos: Position
+    player: Rc<RefCell<Box<dyn Entity>>>
 }
+
+const MOVE_SPEED: f32 = 10.0;
 
 impl Game {
     pub fn new(window: Window, target: DrawTarget, font: Font) -> Game {
         let world = World::new(GRID_SIZE, GRID_SIZE);
         let default_world = Rc::new(RefCell::new(world));
-        // let player = default_world.borrow_mut().add_entity(PlayerEntity::new());
+        let player_pos = EntityPosition(40.0, 220.0);
+        let player = default_world.borrow_mut().add_entity(PlayerEntity::new(Some(player_pos)));
         let size = window.get_size();
         println!("update rate: {}", UPDATE_RATE);
         Game {
@@ -33,7 +37,7 @@ impl Game {
             font,
             last_update: Instant::now(),
             size,
-            player_pos: Position(1, 10),
+            player,
             current_world: default_world
         }
     }
@@ -73,19 +77,21 @@ impl Game {
         self.window.get_keys_pressed(minifb::KeyRepeat::Yes).iter().for_each(|key|
             match key {
                 Key::W => {
-                    self.current_world.borrow_mut().mv_tile_rel(&mut self.player_pos, (0, 1));
+                    self.player.borrow_mut().mv_rel((0.0, MOVE_SPEED));
                 },
                 Key::S => {
-                    self.current_world.borrow_mut().mv_tile_rel(&mut self.player_pos, (0, -1));
+                    self.player.borrow_mut().mv_rel((0.0, -MOVE_SPEED));
                 },
                 Key::A => {
-                    self.current_world.borrow_mut().mv_tile_rel(&mut self.player_pos, (-1, 0));
+                    self.player.borrow_mut().mv_rel((-MOVE_SPEED, 0.0));
                 }
                 ,Key::D => {
-                    self.current_world.borrow_mut().mv_tile_rel(&mut self.player_pos, (1, 0));
+                    self.player.borrow_mut().mv_rel((MOVE_SPEED, 0.0));
                 }
                 _ => (),
             }
         );
+
+        self.current_world.borrow_mut().update();
     }
 }

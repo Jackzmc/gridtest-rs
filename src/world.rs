@@ -42,6 +42,7 @@ impl World {
     }
 
     pub fn add_entity(&mut self, entity: Box<dyn Entity>) -> Rc<RefCell<Box<dyn Entity>>> {
+        println!("adding entity: {:?}", entity.get_type());
         let c = Rc::new(RefCell::new(entity));
         self.entities.push(c.clone());
         c
@@ -180,7 +181,6 @@ impl World {
                 let tile = BaseTile::new(texture.clone());
                 self.set_tile(&pos, tile);
             }
-
         }
     }
     /// Renders every tile
@@ -190,6 +190,23 @@ impl World {
                 let tile = &self.tiles[y][x];
                 tile.render(target, &Position(x, y), font);
             }
+        }
+
+        for ent in self.entities.iter() {
+            ent.borrow().render(target, font);
+        }
+    }
+
+    pub fn update(&mut self) {
+        for y in 0..self.tiles.len() {
+            for x in 0..self.tiles[y].len() {
+                let tile = self.tiles.get_mut(y).unwrap().get_mut(x).unwrap();
+                tile.update();
+            }
+        }
+
+        for ent in self.entities.iter() {
+            ent.borrow_mut().update();
         }
     }
 }

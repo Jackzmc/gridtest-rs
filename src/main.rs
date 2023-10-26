@@ -6,13 +6,12 @@ mod entity;
 
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-use std::time::{Duration, Instant};
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
 use raqote::{DrawTarget, SolidSource, Source, DrawOptions, PathBuilder, Point, Transform, StrokeStyle, Color};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
-use minifb::Key::Up;
+use crate::entity::player::PlayerEntity;
 use crate::game::Game;
 use crate::tile::player::PlayerTile;
 
@@ -24,11 +23,16 @@ impl Display for Position {
     }
 }
 #[derive(Clone, Debug)]
-pub struct EntityPosition(isize, isize);
+pub struct FloatVector2D(f32, f32);
 
-#[derive(Clone, Debug)]
-pub struct Velocity(f32, f32);
+impl Display for FloatVector2D {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:.2},{:.2})", self.0, self.1)
+    }
+}
 
+use FloatVector2D as EntityPosition;
+use FloatVector2D as Velocity;
 
 
 /// The size of the tile (TILE_SIZExTILE_SIZE)
@@ -52,9 +56,6 @@ fn main() {
         .unwrap();
 
     let mut game = Game::new(window, dt, font);
-    // This is weird yes:
-    let player_pos = Position(1, 10);
-    game.world_mut().set_tile(&player_pos, PlayerTile::new());
     game_loop(&mut game);
 }
 

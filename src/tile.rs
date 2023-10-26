@@ -10,7 +10,7 @@ use crate::Position;
 
 pub trait Tile {
     fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font);
-    fn update(&self, window: &mut Window);
+    fn update(&mut self);
     fn get_type(&self) -> &TileType;
 
     fn as_any(&self) -> &dyn Any;
