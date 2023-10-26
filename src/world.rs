@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::cell::RefCell;
 use std::cmp::max;
 use std::ops::RangeBounds;
@@ -42,6 +43,7 @@ impl World {
     }
 
     pub fn add_entity(&mut self, entity: Box<dyn Entity>) -> Rc<RefCell<Box<dyn Entity>>> {
+        println!("adding entity: {:?}", entity.get_type());
         let c = Rc::new(RefCell::new(entity));
         self.entities.push(c.clone());
         c
@@ -121,9 +123,7 @@ impl World {
             return false;
         }
         let new_pos = Position(new_coords.0 as usize, new_coords.1 as usize);
-        println!("mv_tile_rel = {}", new_pos);
         if self.mv_tile(pos, &new_pos) {
-            println!("success");
             pos.0 = new_pos.0;
             pos.1 = new_pos.1;
             return true
@@ -182,7 +182,6 @@ impl World {
                 let tile = BaseTile::new(texture.clone());
                 self.set_tile(&pos, tile);
             }
-            println!("layer {:?} | X={} | {} <= y <= {}", texture, x, height_bounds.0, height_bounds.1);
         }
     }
     /// Renders every tile
@@ -192,6 +191,23 @@ impl World {
                 let tile = &self.tiles[y][x];
                 tile.render(target, &Position(x, y), font);
             }
+        }
+
+        for ent in self.entities.iter() {
+            ent.borrow().render(target, font);
+        }
+    }
+
+    pub fn update(&mut self) {
+        for y in 0..self.tiles.len() {
+            for x in 0..self.tiles[y].len() {
+                let tile = self.tiles.get_mut(y).unwrap().get_mut(x).unwrap();
+                tile.update();
+            }
+        }
+
+        for ent in self.entities.iter() {
+            ent.borrow_mut().update();
         }
     }
 }

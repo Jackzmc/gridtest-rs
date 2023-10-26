@@ -35,7 +35,7 @@ impl Tile for BaseTile {
         target.fill_rect(pos.0 as f32 * TILE_SIZE, RENDER_BOUND as f32 - (pos.1 as f32 * TILE_SIZE), TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from(self.texture.get_color())), &DrawOptions::new());
     }
 
-    fn update(&self, window: &mut Window) {
+    fn update(&mut self) {
 
     }
     fn get_type(&self) -> &TileType {
