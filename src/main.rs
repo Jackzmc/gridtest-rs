@@ -6,14 +6,27 @@ mod entity;
 
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
+use std::sync::OnceLock;
 use minifb::{MouseMode, Window, WindowOptions, ScaleMode, Scale, Key};
 use raqote::{DrawTarget, SolidSource, Source, DrawOptions, PathBuilder, Point, Transform, StrokeStyle, Color};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 use crate::entity::player::PlayerEntity;
-use crate::game::Game;
+use crate::game::{DEFAULT_MAX_FPS, DEFAULT_TICK_RATE, Game};
 use crate::tile::player::PlayerTile;
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+struct Args {
+    /// The tickrate at how many times a second the game updates
+    #[arg(long)]
+    tickrate: Option<u8>,
+
+    /// The maximum fps to achieve. 0 for unlimited
+    #[arg(long)]
+    max_fps: Option<u8>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Position(usize, usize);
@@ -42,8 +55,20 @@ const GRID_SIZE: usize = 20;
 const WINDOW_SIZE: usize = TILE_SIZE as usize * GRID_SIZE;
 const RENDER_BOUND: f32 = TILE_SIZE * GRID_SIZE as f32 - TILE_SIZE;
 
+
+pub static TICK_RATE: OnceLock<f32> = OnceLock::new();
+pub static MAX_FPS: OnceLock<f32> = OnceLock::new();
 fn main() {
-    let dim = TILE_SIZE as usize * GRID_SIZE;
+    let args = Args::parse();
+    TICK_RATE.set(1.0 / args.tickrate.unwrap_or(DEFAULT_TICK_RATE) as f32).unwrap();
+    let max_fps = args.tickrate.unwrap_or(DEFAULT_MAX_FPS);
+    if max_fps == 0 {
+        // Set the limit to 1000 for "unlimited" fps
+        MAX_FPS.set(1.0 / 1000.0).unwrap();
+    } else {
+        MAX_FPS.set(1.0 / args.tickrate.unwrap_or(DEFAULT_MAX_FPS) as f32).unwrap();
+    }
+
     let window = Window::new("Grid Test", WINDOW_SIZE, WINDOW_SIZE, WindowOptions {
         ..WindowOptions::default()
     }).unwrap();

@@ -6,7 +6,7 @@ use minifb::Window;
 use rand::Rng;
 use raqote::{DrawOptions, DrawTarget, Point, SolidSource, Source};
 use crate::entity::{Entity, EntityType};
-use crate::{EntityPosition, Position, TILE_SIZE, Velocity, WINDOW_SIZE};
+use crate::{EntityPosition, Position, RENDER_BOUND, TILE_SIZE, Velocity, WINDOW_SIZE};
 use crate::world::World;
 
 pub struct PlayerEntity {
@@ -32,7 +32,7 @@ impl PlayerEntity {
 
 impl Entity for PlayerEntity {
     fn render(&self, target: &mut DrawTarget, font: &Font) {
-        let (x, y) = (self.pos.0, WINDOW_SIZE as f32 - (self.pos.1));
+        let (x, y) = (self.pos.0, RENDER_BOUND - (self.pos.1));
         target.draw_text(&font, 14., &format!("{} HP", self.health), Point::new(x - (TILE_SIZE/2.0), y - 5.0),
                          &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)),
                          &DrawOptions::new(),
@@ -46,9 +46,9 @@ impl Entity for PlayerEntity {
     fn update(&mut self) {
         let mut rng = rand::thread_rng();
         self.pos.0 += self.vel.0;
-        self.pos.0 = self.pos.0.clamp(0.0, WINDOW_SIZE as f32 - TILE_SIZE);
+        self.pos.0 = self.pos.0.clamp(0.0, RENDER_BOUND);
         self.pos.1 += self.vel.1;
-        self.pos.1 = self.pos.1.clamp(0.0, WINDOW_SIZE as f32 - TILE_SIZE);
+        self.pos.1 = self.pos.1.clamp(0.0, RENDER_BOUND);
 
         self.vel.0 *= FRICTION_VALUE;
         self.vel.1 *= FRICTION_VALUE;

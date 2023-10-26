@@ -4,16 +4,13 @@ use std::time::{Duration, Instant};
 use font_kit::font::Font;
 use minifb::{Key, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
-use crate::{EntityPosition, GRID_SIZE, Position};
+use crate::{EntityPosition, GRID_SIZE, MAX_FPS, Position, TICK_RATE};
 use crate::entity::Entity;
 use crate::entity::player::PlayerEntity;
 use crate::world::World;
 
-const TICK_RATE: usize = 30;
-/// 1/N where N is the amount of updates / second
-const FPS_LIMIT: usize = 60;
-const MIN_TIME_TICKRATE: f32 = 1.0 / TICK_RATE as f32;
-const MIN_TIME_FPS: f32 = 1.0 / FPS_LIMIT as f32;
+pub const DEFAULT_TICK_RATE: u8 = 30;
+pub const DEFAULT_MAX_FPS: u8 = 60;
 pub struct Game {
     pub window: Window,
     pub target: DrawTarget,
@@ -24,17 +21,16 @@ pub struct Game {
     current_world: Rc<RefCell<World>>,
     player: Rc<RefCell<Box<dyn Entity>>>
 }
-
 const MOVE_SPEED: f32 = 10.0;
 
 impl Game {
-    pub fn new(window: Window, target: DrawTarget, font: Font) -> Game {
+    pub fn new( window: Window, target: DrawTarget, font: Font) -> Game {
         let world = World::new(GRID_SIZE, GRID_SIZE);
         let default_world = Rc::new(RefCell::new(world));
         let player_pos = EntityPosition(40.0, 220.0);
         let player = default_world.borrow_mut().add_entity(PlayerEntity::new(Some(player_pos)));
         let size = window.get_size();
-        println!("update rate: {}", MIN_TIME_TICKRATE);
+        println!("tickrate = {} | max fps = {}", TICK_RATE.get().unwrap(), MAX_FPS.get().unwrap());
         Game {
             window,
             target,
@@ -69,7 +65,7 @@ impl Game {
 
     pub fn render(&mut self) {
         // Only run 1/UPDATE_RATE times a second
-        if self.last_render.elapsed().as_secs_f32() < MIN_TIME_FPS {
+        if &self.last_render.elapsed().as_secs_f32() < MAX_FPS.get().unwrap() {
             return;
         }
         self.target.clear(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff));
@@ -80,7 +76,7 @@ impl Game {
 
     pub fn update(&mut self) {
         // Only run 1/UPDATE_RATE times a second
-        if self.last_update.elapsed().as_secs_f32() < MIN_TIME_TICKRATE {
+        if &self.last_update.elapsed().as_secs_f32() < TICK_RATE.get().unwrap() {
             return;
         }
         self.window.get_keys_pressed(minifb::KeyRepeat::Yes).iter().for_each(|key|

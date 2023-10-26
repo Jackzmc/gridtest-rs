@@ -12,3 +12,4 @@ rand = { version = "0.8.5", features = [] }
 minifb = "*"
 raqote = "*"
 font-kit = "*"
+clap = { version = "4.4.7", features = ["derive"] }
