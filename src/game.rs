@@ -9,13 +9,17 @@ use crate::entity::Entity;
 use crate::entity::player::PlayerEntity;
 use crate::world::World;
 
+const TICK_RATE: usize = 30;
 /// 1/N where N is the amount of updates / second
-const UPDATE_RATE: f32 = 1.0 / 30.0;
+const FPS_LIMIT: usize = 60;
+const MIN_TIME_TICKRATE: f32 = 1.0 / TICK_RATE as f32;
+const MIN_TIME_FPS: f32 = 1.0 / FPS_LIMIT as f32;
 pub struct Game {
     pub window: Window,
     pub target: DrawTarget,
     pub font: Font,
     last_update: Instant,
+    last_render: Instant,
     size: (usize, usize),
     current_world: Rc<RefCell<World>>,
     player: Rc<RefCell<Box<dyn Entity>>>
@@ -30,12 +34,13 @@ impl Game {
         let player_pos = EntityPosition(40.0, 220.0);
         let player = default_world.borrow_mut().add_entity(PlayerEntity::new(Some(player_pos)));
         let size = window.get_size();
-        println!("update rate: {}", UPDATE_RATE);
+        println!("update rate: {}", MIN_TIME_TICKRATE);
         Game {
             window,
             target,
             font,
             last_update: Instant::now(),
+            last_render: Instant::now(),
             size,
             player,
             current_world: default_world
@@ -63,17 +68,21 @@ impl Game {
     }
 
     pub fn render(&mut self) {
+        // Only run 1/UPDATE_RATE times a second
+        if self.last_render.elapsed().as_secs_f32() < MIN_TIME_FPS {
+            return;
+        }
         self.target.clear(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff));
         self.current_world.borrow().render(&mut self.target, &self.font);
         self.window.update_with_buffer(self.target.get_data(), self.size.0, self.size.1).unwrap();
+        self.last_render = Instant::now();
     }
 
     pub fn update(&mut self) {
         // Only run 1/UPDATE_RATE times a second
-        if self.last_update.elapsed().as_secs_f32() < UPDATE_RATE {
+        if self.last_update.elapsed().as_secs_f32() < MIN_TIME_TICKRATE {
             return;
         }
-        self.last_update = Instant::now();
         self.window.get_keys_pressed(minifb::KeyRepeat::Yes).iter().for_each(|key|
             match key {
                 Key::W => {
@@ -93,5 +102,6 @@ impl Game {
         );
 
         self.current_world.borrow_mut().update();
+        self.last_update = Instant::now();
     }
 }
