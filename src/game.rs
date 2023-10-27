@@ -2,9 +2,9 @@ use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 use font_kit::font::Font;
-use minifb::{Key, Window};
+use minifb::{Key, MouseButton, MouseMode, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
-use crate::{EntityPosition, GRID_SIZE, MAX_FPS, TilePosition, TICK_RATE};
+use crate::{EntityPosition, GRID_SIZE, MAX_FPS, TilePosition, TICK_RATE, TILE_SIZE};
 use crate::entity::Entity;
 use crate::entity::player::PlayerEntity;
 use crate::world::World;
@@ -19,7 +19,8 @@ pub struct Game {
     last_render: Instant,
     size: (usize, usize),
     current_world: Rc<RefCell<World>>,
-    player: Rc<RefCell<Box<dyn Entity>>>
+    player: Rc<RefCell<Box<dyn Entity>>>,
+    is_mouse_down: bool,
 }
 const MOVE_SPEED: f32 = 10.0;
 
@@ -38,7 +39,8 @@ impl Game {
             last_render: Instant::now(),
             size,
             player,
-            current_world: world
+            current_world: world,
+            is_mouse_down: false
         }
     }
 
@@ -77,6 +79,17 @@ impl Game {
         // Only run 1/UPDATE_RATE times a second
         if &self.last_update.elapsed().as_secs_f32() < TICK_RATE.get().unwrap() {
             return;
+        }
+        if self.window.get_mouse_down(MouseButton::Left) {
+            if !self.is_mouse_down {
+                self.is_mouse_down = true;
+                if let Some(cursor_pos) = self.window.get_mouse_pos(MouseMode::Clamp) {
+                    let pos = TilePosition((cursor_pos.0 / TILE_SIZE) as usize, (cursor_pos.1 / TILE_SIZE) as usize);
+                    println!("clicked at ({:.2},{:.2}) / tile {}", cursor_pos.0, cursor_pos.1, pos);
+                }
+            }
+        } else {
+            self.is_mouse_down = false;
         }
         self.window.get_keys_pressed(minifb::KeyRepeat::Yes).iter().for_each(|key|
             match key {

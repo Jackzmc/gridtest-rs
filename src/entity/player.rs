@@ -30,6 +30,9 @@ impl PlayerEntity {
     }
 }
 
+const PLAYER_SIZE: f32 = 20f32;
+const HALF_PLAYER_SIZE: f32 = PLAYER_SIZE / 2.0;
+
 impl Entity for PlayerEntity {
     fn render(&self, target: &mut DrawTarget, font: &Font) {
         let (x, y) = (self.pos.0, RENDER_BOUND - (self.pos.1));
@@ -37,36 +40,46 @@ impl Entity for PlayerEntity {
                          &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)),
                          &DrawOptions::new(),
         );
-        target.draw_text(&font, 12., &format!("pos={} vel={}", self.pos, self.vel), Point::new(20.0, 100.0), &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)),
+        target.draw_text(&font, 13., &format!("pos={} vel={}", self.pos, self.vel), Point::new(20.0, 100.0), &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)),
                          &DrawOptions::new(),
         );
-        target.fill_rect(x, y, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)), &DrawOptions::new());
+        target.draw_text(&font, 13., &format!("tile_pos={}", self.pos.to_tile_coords()), Point::new(20.0, 120.0), &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)),
+                         &DrawOptions::new(),
+        );
+        target.fill_rect(x, y, PLAYER_SIZE, PLAYER_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)), &DrawOptions::new());
 
     }
     fn update(&mut self, world: &World) {
-        if self.vel.0 != 0.0 {
-            if self.vel.0 > 0.0 {
+        if self.vel.0 > 0.0 {
+            // going left
+            if !world.is_occupied(&self.pos.offset((HALF_PLAYER_SIZE, 0.0)).to_tile_coords()) {
                 self.pos.0 += 1.0;
             } else {
+                println!("collision=RIGHT");
+            }
+        } else if self.vel.0 < 0.0 {
+            if !world.is_occupied(&self.pos.offset((-HALF_PLAYER_SIZE, 0.0)).to_tile_coords()) {
                 self.pos.0 -= 1.0;
+            } else {
+                println!("collision=LEFT");
             }
         }
-        if self.vel.1 != 0.0 {
-            if self.vel.1 > 0.0 {
+        if self.vel.1 > 0.0 {
+            if !world.is_occupied(&self.pos.offset((0.0, HALF_PLAYER_SIZE)).to_tile_coords()) {
                 self.pos.1 += 1.0;
             } else {
+                println!("collision=UP");
+            }
+        } else if self.vel.1 < 0.0 {
+            if !world.is_occupied(&self.pos.offset((0.0, -HALF_PLAYER_SIZE)).to_tile_coords()) {
                 self.pos.1 -= 1.0;
+            } else {
+                println!("collision=DOWN");
             }
         }
+
         self.pos.0 = self.pos.0.clamp(0.0, RENDER_BOUND);
         self.pos.1 = self.pos.1.clamp(0.0, RENDER_BOUND);
-        // TODO: panics.
-        let occ_pos = self.pos.to_tile_coords();
-        let is_occupied = world.is_occupied(&occ_pos);
-        println!("occupied({}) = {}", occ_pos, is_occupied);
-        if is_occupied {
-            self.vel.0 +=420.0;
-        }
 
         self.vel.0 /= FRICTION_VALUE;
         if self.vel.0.abs() < 0.01 {

@@ -37,7 +37,10 @@ impl Display for TilePosition {
 }
 impl EntityPosition {
     fn to_tile_coords(&self) -> TilePosition {
-        TilePosition((self.0 / TILE_SIZE).round() as usize, (self.1 / TILE_SIZE).round() as usize)
+        TilePosition((self.0 / TILE_SIZE).round() as usize,((self.1) / TILE_SIZE).round() as usize)
+    }
+    fn offset(&self, offset: (f32, f32)) -> EntityPosition {
+        EntityPosition(self.0 + offset.0, self.1 + offset.1)
     }
 }
 #[derive(Clone, Debug)]
