@@ -4,12 +4,11 @@ pub mod air;
 
 use std::any::Any;
 use font_kit::font::Font;
-use minifb::Window;
 use raqote::DrawTarget;
-use crate::Position;
+use crate::TilePosition;
 
 pub trait Tile {
-    fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font);
+    fn render(&self, target: &mut DrawTarget, pos: &TilePosition, font: &Font);
     fn update(&mut self);
     fn get_type(&self) -> &TileType;
 

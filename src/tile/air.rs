@@ -2,7 +2,7 @@ use std::any::Any;
 use font_kit::font::Font;
 use minifb::Window;
 use raqote::DrawTarget;
-use crate::Position;
+use crate::TilePosition;
 use crate::tile::{Tile, TileType};
 
 #[derive(Copy,Clone)]
@@ -14,7 +14,7 @@ impl EmptyTile {
     }
 }
 impl Tile for EmptyTile {
-    fn render(&self, target: &mut DrawTarget, pos: &Position, font: &Font) {
+    fn render(&self, target: &mut DrawTarget, pos: &TilePosition, font: &Font) {
         // Do nothing
     }
 

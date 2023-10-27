@@ -8,13 +8,14 @@ use rand::distributions::uniform::SampleRange;
 use rand::Rng;
 use rand::rngs::ThreadRng;
 use raqote::DrawTarget;
-use crate::{GRID_SIZE, Position};
+use crate::{GRID_SIZE, TilePosition};
 use crate::entity::Entity;
 use crate::tile::base::{BaseTile, TileTexture};
 use crate::tile::{Tile, TileType};
 use crate::tile::air::EmptyTile;
 
 pub struct World {
+    self_ref: Option<Rc<RefCell<World>>>,
     tiles: Vec<Vec<Box<dyn Tile>>>,
     entities: Vec<Rc<RefCell<Box<dyn Entity>>>>
 }
@@ -22,7 +23,7 @@ pub struct World {
 const TILE_LAYERS: [TileTexture; 4] = [TileTexture::Bedrock, TileTexture::Stone, TileTexture::Dirt, TileTexture::Grass];
 
 impl World {
-    pub fn new(width: usize, height: usize) -> World {
+    pub fn new(width: usize, height: usize) -> Rc<RefCell<World>> {
         // Initialize the tile
         let mut rows = vec![];
         for _ in 0..height {
@@ -34,15 +35,20 @@ impl World {
             rows.push(columns);
         }
         let mut world = World {
+            self_ref: None,
             tiles: rows,
             entities: vec![],
         };
+
         world.generate();
-        world
+        let world_ref = Rc::new(RefCell::new(world));
+        world_ref.borrow_mut().self_ref = Some(world_ref.clone());
+        world_ref
     }
 
-    pub fn add_entity(&mut self, entity: Box<dyn Entity>) -> Rc<RefCell<Box<dyn Entity>>> {
-        println!("adding entity: {:?}", entity.get_type());
+
+    pub fn add_entity(&mut self, mut entity: Box<dyn Entity>) -> Rc<RefCell<Box<dyn Entity>>> {
+        entity.set_world(Rc::downgrade(self.self_ref.as_ref().unwrap()));
         let c = Rc::new(RefCell::new(entity));
         self.entities.push(c.clone());
         c
@@ -55,19 +61,19 @@ impl World {
     }
 
     /// Removes the tile at position (replacing with air), returning the tile
-    pub fn remove_tile(&mut self, pos: &Position) -> Box<dyn Tile> {
+    pub fn remove_tile(&mut self, pos: &TilePosition) -> Box<dyn Tile> {
         let replacement_tile = EmptyTile::new();
         self.swap_in_tile(pos, replacement_tile)
     }
 
-    pub fn get_tile(&self, pos: &Position) -> Option<&Box<dyn Tile>> {
+    pub fn get_tile(&self, pos: &TilePosition) -> Option<&Box<dyn Tile>> {
         if let Some(row) = self.tiles.get(pos.1) {
             return row.get(pos.0);
         }
         None
     }
 
-    pub fn get_tile_mut(&mut self, pos: &Position) -> Option<&mut Box<dyn Tile>> {
+    pub fn get_tile_mut(&mut self, pos: &TilePosition) -> Option<&mut Box<dyn Tile>> {
         if let Some(row) = self.tiles.get_mut(pos.1) {
             if let Some(tile) = row.get_mut(pos.0) {
                 return Some(tile);
@@ -77,12 +83,12 @@ impl World {
     }
 
     /// Swaps in tile into position, returning the replaced tile
-    pub fn swap_in_tile(&mut self, pos: &Position, mut tile: Box<dyn Tile>) -> Box<dyn Tile> {
+    pub fn swap_in_tile(&mut self, pos: &TilePosition, mut tile: Box<dyn Tile>) -> Box<dyn Tile> {
         let row = self.tiles.get_mut(pos.1).unwrap();
         std::mem::replace(&mut row[pos.0], tile)
     }
 
-    pub fn swap_tile(&mut self, a: &Position, b: &Position) {
+    pub fn swap_tile(&mut self, a: &TilePosition, b: &TilePosition) {
         // This is unsafe code because we are taking two mut references so we can swap them around.
         unsafe {
             let tile_a: *mut Box<dyn Tile> = &mut self.tiles[a.1][a.0];
@@ -91,19 +97,19 @@ impl World {
         }
     }
 
-    pub fn is_occupied(&self, pos: &Position) -> bool {
+    pub fn is_occupied(&self, pos: &TilePosition) -> bool {
         self.get_tile(pos).is_some_and(|t| t.get_type() != &TileType::Empty)
     }
 
     /// Sets the tile at position, returning a reference to it.
-    pub fn set_tile(&mut self, pos: &Position, tile: Box<dyn Tile>) -> &Box<dyn Tile> {
+    pub fn set_tile(&mut self, pos: &TilePosition, tile: Box<dyn Tile>) -> &Box<dyn Tile> {
         self.swap_in_tile(pos, tile);
         let row = self.tiles.get(pos.1).unwrap();
         row.get(pos.0).unwrap()
     }
 
     /// Moves a tile from pos 'from' to 'to'. Returns false if out of bounds
-    pub fn mv_tile(&mut self, from: &Position, to: &Position) -> bool {
+    pub fn mv_tile(&mut self, from: &TilePosition, to: &TilePosition) -> bool {
         if to.0 >= GRID_SIZE || to.1 >= GRID_SIZE {
             return false;
         } else if self.is_occupied(to) {
@@ -115,13 +121,13 @@ impl World {
     }
 
     /// Move tile at pos by offset, returns bool if successful / in bounds
-    pub fn mv_tile_rel(&mut self, pos: &mut Position, offset: (isize, isize)) -> bool {
+    pub fn mv_tile_rel(&mut self, pos: &mut TilePosition, offset: (isize, isize)) -> bool {
         let new_coords = (pos.0 as isize + offset.0, pos.1 as isize + offset.1);
         // Check that we don't go below 0
         if new_coords.0 < 0 || new_coords.1 < 0 {
             return false;
         }
-        let new_pos = Position(new_coords.0 as usize, new_coords.1 as usize);
+        let new_pos = TilePosition(new_coords.0 as usize, new_coords.1 as usize);
         if self.mv_tile(pos, &new_pos) {
             pos.0 = new_pos.0;
             pos.1 = new_pos.1;
@@ -147,7 +153,7 @@ impl World {
         let mut rng = rand::thread_rng();
         for x in 0..GRID_SIZE {
             let tile = BaseTile::new(TileTexture::Bedrock);
-            let pos = Position(x, 0);
+            let pos = TilePosition(x, 0);
             self.set_tile(&pos, tile);
         }
         // For each layer, generate N amount of tiles starting from bottom up
@@ -162,7 +168,7 @@ impl World {
             while height > 0 {
                 let y = min_y;
                 // If the tile is empty and the tile below is a solid:
-                let pos = Position(x, y);
+                let pos = TilePosition(x, y);
                 if self.is_occupied(&pos) {
                     min_y += 1;
                     continue;
@@ -188,7 +194,7 @@ impl World {
         for y in 0..self.tiles.len() {
             for x in 0..self.tiles[y].len() {
                 let tile = &self.tiles[y][x];
-                tile.render(target, &Position(x, y), font);
+                tile.render(target, &TilePosition(x, y), font);
             }
         }
 
@@ -206,7 +212,7 @@ impl World {
         }
 
         for ent in self.entities.iter() {
-            ent.borrow_mut().update();
+            ent.borrow_mut().update(self);
         }
     }
 }

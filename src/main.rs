@@ -29,10 +29,15 @@ struct Args {
 }
 
 #[derive(Clone, Debug)]
-pub struct Position(usize, usize);
-impl Display for Position {
+pub struct TilePosition(usize, usize);
+impl Display for TilePosition {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "({},{})", self.0, self.1)
+    }
+}
+impl EntityPosition {
+    fn to_tile_coords(&self) -> TilePosition {
+        TilePosition((self.0 / TILE_SIZE).round() as usize, (self.1 / TILE_SIZE).round() as usize)
     }
 }
 #[derive(Clone, Debug)]
@@ -87,6 +92,10 @@ fn main() {
 
 fn game_loop(game: &mut Game) {
     'main_loop: loop {
+        // End the game when closed
+        if !game.window.is_open() {
+            return;
+        }
         game.update();
         game.render();
     }

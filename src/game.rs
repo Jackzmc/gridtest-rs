@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use font_kit::font::Font;
 use minifb::{Key, Window};
 use raqote::{Color, DrawOptions, DrawTarget, Point, SolidSource, Source};
-use crate::{EntityPosition, GRID_SIZE, MAX_FPS, Position, TICK_RATE};
+use crate::{EntityPosition, GRID_SIZE, MAX_FPS, TilePosition, TICK_RATE};
 use crate::entity::Entity;
 use crate::entity::player::PlayerEntity;
 use crate::world::World;
@@ -26,9 +26,8 @@ const MOVE_SPEED: f32 = 10.0;
 impl Game {
     pub fn new( window: Window, target: DrawTarget, font: Font) -> Game {
         let world = World::new(GRID_SIZE, GRID_SIZE);
-        let default_world = Rc::new(RefCell::new(world));
         let player_pos = EntityPosition(40.0, 220.0);
-        let player = default_world.borrow_mut().add_entity(PlayerEntity::new(Some(player_pos)));
+        let player = world.borrow_mut().add_entity(PlayerEntity::new(Some(player_pos)));
         let size = window.get_size();
         println!("tickrate = {} | max fps = {}", TICK_RATE.get().unwrap(), MAX_FPS.get().unwrap());
         Game {
@@ -39,7 +38,7 @@ impl Game {
             last_render: Instant::now(),
             size,
             player,
-            current_world: default_world
+            current_world: world
         }
     }
 

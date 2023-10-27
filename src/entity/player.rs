@@ -5,18 +5,18 @@ use font_kit::font::Font;
 use minifb::Window;
 use rand::Rng;
 use raqote::{DrawOptions, DrawTarget, Point, SolidSource, Source};
-use crate::entity::{Entity, EntityType};
-use crate::{EntityPosition, Position, RENDER_BOUND, TILE_SIZE, Velocity, WINDOW_SIZE};
+use crate::entity::{Entity, EntityType, Health};
+use crate::{EntityPosition, TilePosition, RENDER_BOUND, TILE_SIZE, Velocity, WINDOW_SIZE};
 use crate::world::World;
 
 pub struct PlayerEntity {
     pos: EntityPosition,
     world: Option<Weak<RefCell<World>>>,
     vel: Velocity,
-    health: usize
+    health: Health
 }
 
-const FRICTION_VALUE: f32 = 0.05;
+const FRICTION_VALUE: f32 = 2.0;
 const GRAVITY_FACTOR: f32 = 5.0;
 
 impl PlayerEntity {
@@ -43,15 +43,39 @@ impl Entity for PlayerEntity {
         target.fill_rect(x, y, TILE_SIZE, TILE_SIZE, &Source::Solid(SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0, 0)), &DrawOptions::new());
 
     }
-    fn update(&mut self) {
-        let mut rng = rand::thread_rng();
-        self.pos.0 += self.vel.0;
+    fn update(&mut self, world: &World) {
+        if self.vel.0 != 0.0 {
+            if self.vel.0 > 0.0 {
+                self.pos.0 += 1.0;
+            } else {
+                self.pos.0 -= 1.0;
+            }
+        }
+        if self.vel.1 != 0.0 {
+            if self.vel.1 > 0.0 {
+                self.pos.1 += 1.0;
+            } else {
+                self.pos.1 -= 1.0;
+            }
+        }
         self.pos.0 = self.pos.0.clamp(0.0, RENDER_BOUND);
-        self.pos.1 += self.vel.1;
         self.pos.1 = self.pos.1.clamp(0.0, RENDER_BOUND);
+        // TODO: panics.
+        let occ_pos = self.pos.to_tile_coords();
+        let is_occupied = world.is_occupied(&occ_pos);
+        println!("occupied({}) = {}", occ_pos, is_occupied);
+        if is_occupied {
+            self.vel.0 +=420.0;
+        }
 
-        self.vel.0 *= FRICTION_VALUE;
-        self.vel.1 *= FRICTION_VALUE;
+        self.vel.0 /= FRICTION_VALUE;
+        if self.vel.0.abs() < 0.01 {
+            self.vel.0 = 0.0;
+        }
+        self.vel.1 /= FRICTION_VALUE;
+        if self.vel.1.abs() < 0.01 {
+            self.vel.1 = 0.0;
+        }
 
         // TODO: collision and gravity! fun!
     }
@@ -73,11 +97,11 @@ impl Entity for PlayerEntity {
         self.vel.1 += offset.1;
     }
 
-    fn get_health(&self) -> usize {
+    fn get_health(&self) -> Health {
         self.health
     }
 
-    fn set_health(&mut self, value: usize) {
+    fn set_health(&mut self, value: Health) {
         self.health = value;
     }
 
@@ -105,5 +129,9 @@ impl Entity for PlayerEntity {
 
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn take_damage(&mut self, damage: Health) {
+        self.health -= damage;
     }
 }
