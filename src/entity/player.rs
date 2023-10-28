@@ -54,27 +54,19 @@ impl Entity for PlayerEntity {
             // going left
             if !world.is_occupied(&self.pos.offset((HALF_PLAYER_SIZE, 0.0)).to_tile_coords()) {
                 self.pos.0 += 1.0;
-            } else {
-                println!("collision=RIGHT");
             }
         } else if self.vel.0 < 0.0 {
             if !world.is_occupied(&self.pos.offset((-HALF_PLAYER_SIZE, 0.0)).to_tile_coords()) {
                 self.pos.0 -= 1.0;
-            } else {
-                println!("collision=LEFT");
             }
         }
         if self.vel.1 > 0.0 {
             if !world.is_occupied(&self.pos.offset((0.0, HALF_PLAYER_SIZE)).to_tile_coords()) {
                 self.pos.1 += 1.0;
-            } else {
-                println!("collision=UP");
             }
         } else if self.vel.1 < 0.0 {
             if !world.is_occupied(&self.pos.offset((0.0, -HALF_PLAYER_SIZE)).to_tile_coords()) {
                 self.pos.1 -= 1.0;
-            } else {
-                println!("collision=DOWN");
             }
         }
 
@@ -88,9 +80,8 @@ impl Entity for PlayerEntity {
         self.vel.1 /= FRICTION_VALUE;
         if self.vel.1.abs() < 0.01 {
             self.vel.1 = 0.0;
+            self.vel.1 -= GRAVITY_FACTOR;
         }
-
-        // TODO: collision and gravity! fun!
     }
 
     fn get_type(&self) -> &EntityType {
